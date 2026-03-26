@@ -24,20 +24,20 @@ public class LobbyFly extends JavaPlugin implements Listener {
         saveDefaultConfig();
 
         // Code
-        Bukkit.getConsoleSender().sendMessage("§c[§6LobbyFly§c] §6LobbyFly§a activated successfully");
+        Bukkit.getConsoleSender().sendMessage("§c[§6LobbyFly-Pro§c] §6LobbyFly-Pro§a activated successfully");
     }
 
     public void getCommands() {
         getCommand("fly").setExecutor(fly);
         getCommand("lfreload").setExecutor(reload);
         getCommand("lfconfig").setExecutor(config);
-        Bukkit.getConsoleSender().sendMessage("§c[§6LobbyFly§c] §6Commands§a activated successfully");
+        Bukkit.getConsoleSender().sendMessage("§c[§6LobbyFly-Pro§c] §6Commands§a activated successfully");
     }
 
     public void getEvents() {
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getPluginManager().registerEvents(fly, this);
-        Bukkit.getConsoleSender().sendMessage("§c[§6LobbyFly§c] §6Events§a activated successfully");
+        Bukkit.getConsoleSender().sendMessage("§c[§6LobbyFly-Pro§c] §6Events§a activated successfully");
     }
 
 }

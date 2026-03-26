@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>me.CrazyBanana4Life</groupId>
-    <artifactId>LobbyFly</artifactId>
+    <artifactId>LobbyFly-Pro</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
-    <name>LobbyFly</name>
+    <name>LobbyFly-Pro</name>
 
     <description>This is a plugin where people with the permission have the ability to "/fly" in the lobby!
     </description>
