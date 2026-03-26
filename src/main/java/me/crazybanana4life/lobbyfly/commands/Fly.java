@@ -13,18 +13,17 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerToggleFlightEvent;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.util.List;
 
 public class Fly implements CommandExecutor, Listener {
     private LobbyFly plugin;
-    private NamespacedKey key;
+    private NamespacedKey disabledKey;
 
     public Fly(LobbyFly plugin) {
         this.plugin = plugin;
-        this.key = new NamespacedKey(plugin, "flying");
+        this.disabledKey = new NamespacedKey(plugin, "disabled");
     }
 
     private boolean isAllowedWorld(World world) {
@@ -41,14 +40,16 @@ public class Fly implements CommandExecutor, Listener {
         return false;
     }
 
-    @EventHandler
-    public void onPlayerJoinWorld(PlayerChangedWorldEvent event) {
-        Player player = event.getPlayer();
+    private void applyFlight(Player player) {
         if (isAllowedWorld(player.getWorld()) || player.hasPermission("lobbyfly.bypass")) {
             if (player.hasPermission("lobbyfly.use")) {
-                player.setAllowFlight(true);
-                if (player.getPersistentDataContainer().getOrDefault(key, PersistentDataType.BYTE, (byte) 0) == 1) {
+                boolean isDisabled = player.getPersistentDataContainer().getOrDefault(disabledKey, PersistentDataType.BYTE, (byte) 0) == 1;
+                if (!isDisabled) {
+                    player.setAllowFlight(true);
                     player.setFlying(true);
+                } else {
+                    player.setAllowFlight(false);
+                    player.setFlying(false);
                 }
             }
         } else {
@@ -58,35 +59,18 @@ public class Fly implements CommandExecutor, Listener {
     }
 
     @EventHandler
+    public void onPlayerJoinWorld(PlayerChangedWorldEvent event) {
+        applyFlight(event.getPlayer());
+    }
+
+    @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (player.isOnline()) {
-                if (isAllowedWorld(player.getWorld()) || player.hasPermission("lobbyfly.bypass")) {
-                    if (player.hasPermission("lobbyfly.use")) {
-                        player.setAllowFlight(true);
-                        if (player.getPersistentDataContainer().getOrDefault(key, PersistentDataType.BYTE, (byte) 0) == 1) {
-                            player.setFlying(true);
-                        }
-                    }
-                } else {
-                    player.setAllowFlight(false);
-                    player.setFlying(false);
-                }
+                applyFlight(player);
             }
         }, 1L);
-    }
-
-    @EventHandler
-    public void onToggle(PlayerToggleFlightEvent event) {
-        Player player = event.getPlayer();
-        if (player.hasPermission("lobbyfly.use")) {
-            if (event.isFlying()) {
-                player.getPersistentDataContainer().set(key, PersistentDataType.BYTE, (byte) 1);
-            } else {
-                player.getPersistentDataContainer().set(key, PersistentDataType.BYTE, (byte) 0);
-            }
-        }
     }
 
     @Override
@@ -96,14 +80,16 @@ public class Fly implements CommandExecutor, Listener {
             if (args.length == 0) {
                 if (isAllowedWorld(player.getWorld()) || player.hasPermission("lobbyfly.bypass")) {
                     if (player.hasPermission("lobbyfly.use")) {
-                        if (player.getAllowFlight()) {
+                        boolean isDisabled = player.getPersistentDataContainer().getOrDefault(disabledKey, PersistentDataType.BYTE, (byte) 0) == 1;
+                        if (!isDisabled) {
+                            player.getPersistentDataContainer().set(disabledKey, PersistentDataType.BYTE, (byte) 1);
                             player.setAllowFlight(false);
                             player.setFlying(false);
-                            player.getPersistentDataContainer().set(key, PersistentDataType.BYTE, (byte) 0);
                             player.sendMessage(ChatColor.AQUA + "Flight " + ChatColor.RED + "disabled" + ChatColor.AQUA + "!");
                         } else {
+                            player.getPersistentDataContainer().set(disabledKey, PersistentDataType.BYTE, (byte) 0);
                             player.setAllowFlight(true);
-                            player.getPersistentDataContainer().set(key, PersistentDataType.BYTE, (byte) 1);
+                            player.setFlying(true);
                             player.sendMessage(ChatColor.AQUA + "Flight " + ChatColor.GREEN + "enabled" + ChatColor.AQUA + "!");
                         }
                     } else {
