@@ -1,6 +1,7 @@
 package me.crazybanana4life.lobbyfly.commands;
 
 import me.crazybanana4life.lobbyfly.LobbyFly;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.NamespacedKey;
 import org.bukkit.World;
@@ -28,6 +29,12 @@ public class Fly implements CommandExecutor, Listener {
 
     private boolean isAllowedWorld(World world) {
         List<String> worlds = plugin.getConfig().getStringList("Worlds");
+        if (worlds.isEmpty()) {
+            String single = plugin.getConfig().getString("World");
+            if (single != null && !single.isEmpty()) {
+                return world.getName().equalsIgnoreCase(single);
+            }
+        }
         for (String w : worlds) {
             if (world.getName().equalsIgnoreCase(w)) return true;
         }
@@ -53,17 +60,21 @@ public class Fly implements CommandExecutor, Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        if (isAllowedWorld(player.getWorld()) || player.hasPermission("lobbyfly.bypass")) {
-            if (player.hasPermission("lobbyfly.use")) {
-                player.setAllowFlight(true);
-                if (player.getPersistentDataContainer().getOrDefault(key, PersistentDataType.BYTE, (byte) 0) == 1) {
-                    player.setFlying(true);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (player.isOnline()) {
+                if (isAllowedWorld(player.getWorld()) || player.hasPermission("lobbyfly.bypass")) {
+                    if (player.hasPermission("lobbyfly.use")) {
+                        player.setAllowFlight(true);
+                        if (player.getPersistentDataContainer().getOrDefault(key, PersistentDataType.BYTE, (byte) 0) == 1) {
+                            player.setFlying(true);
+                        }
+                    }
+                } else {
+                    player.setAllowFlight(false);
+                    player.setFlying(false);
                 }
             }
-        } else {
-            player.setAllowFlight(false);
-            player.setFlying(false);
-        }
+        }, 1L);
     }
 
     @EventHandler
