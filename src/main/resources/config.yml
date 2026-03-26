@@ -1,6 +1,7 @@
-# Set this to your lobby world!
+# Set this to your lobby worlds!
 
-World: 'lobby'
+Worlds:
+  - 'lobby'
 
 # Permissions;
 # lobbyfly.use - Gives permission to use "/fly" command
@@ -9,4 +10,4 @@ World: 'lobby'
 # Commands;
 # /fly - Used to enable/disable fly
 # /lfreload - Used to reload this plugin
-# /lfconfig - Used to see what world is set in your config
+# /lfconfig - Used to see what worlds are set in your config

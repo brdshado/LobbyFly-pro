@@ -7,21 +7,18 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
 public class Lfconfig implements CommandExecutor {
-    // Var
-    private LobbyFly plugin = null;
+    private LobbyFly plugin;
 
-    // Constructor
     public Lfconfig(LobbyFly plugin) {
         this.plugin = plugin;
     }
 
-    // Command
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if(sender.hasPermission("lobbyfly.admin")) {
-            sender.sendMessage(ChatColor.GOLD + "Your lobby world is set to: " + ChatColor.AQUA + plugin.getConfig().getString("World"));
+            sender.sendMessage(ChatColor.GOLD + "Your lobby worlds are set to: " + ChatColor.AQUA + String.join(", ", plugin.getConfig().getStringList("Worlds")));
         }
 
-        return false;
+        return true;
     }
 }

@@ -1,8 +1,8 @@
 package me.crazybanana4life.lobbyfly.commands;
 
 import me.crazybanana4life.lobbyfly.LobbyFly;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -12,74 +12,99 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerToggleFlightEvent;
+import org.bukkit.persistence.PersistentDataType;
 
-import org.bukkit.ChatColor.*;
-import org.bukkit.plugin.Plugin;
+import java.util.List;
 
 public class Fly implements CommandExecutor, Listener {
-    // Var
-    private LobbyFly plugin = null;
+    private LobbyFly plugin;
+    private NamespacedKey key;
 
-    // Constructor
     public Fly(LobbyFly plugin) {
         this.plugin = plugin;
+        this.key = new NamespacedKey(plugin, "flying");
     }
 
-    // Events
+    private boolean isAllowedWorld(World world) {
+        List<String> worlds = plugin.getConfig().getStringList("Worlds");
+        for (String w : worlds) {
+            if (world.getName().equalsIgnoreCase(w)) return true;
+        }
+        return false;
+    }
+
     @EventHandler
     public void onPlayerJoinWorld(PlayerChangedWorldEvent event) {
-        // Var
         Player player = event.getPlayer();
-
-        // Code
-        player.setAllowFlight(false);
+        if (isAllowedWorld(player.getWorld()) || player.hasPermission("lobbyfly.bypass")) {
+            if (player.hasPermission("lobbyfly.use")) {
+                player.setAllowFlight(true);
+                if (player.getPersistentDataContainer().getOrDefault(key, PersistentDataType.BYTE, (byte) 0) == 1) {
+                    player.setFlying(true);
+                }
+            }
+        } else {
+            player.setAllowFlight(false);
+            player.setFlying(false);
+        }
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        // Var
         Player player = event.getPlayer();
-
-        // Code
-        player.setAllowFlight(false);
-    }
-
-    // Command
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        // Player Check
-        if(sender instanceof Player) {
-            // Command Check
-            if(args.length == 0 || args == null) {
-                // World Check (Bypass)
-                if(((Player) sender).getWorld() == Bukkit.getServer().getWorld(plugin.getConfig().getString("World")) || sender.hasPermission("lobbyfly.bypass")) {
-                    // Permission Check
-                    if(sender.hasPermission("lobbyfly.use") || sender.hasPermission("lobbyfly.bypass")) {
-                        // Code
-                        if(((Player) sender).getAllowFlight() == true) {
-                            sender.sendMessage(ChatColor.AQUA + "Flight " + ChatColor.RED + "disabled" + ChatColor.AQUA + "!");
-                            ((Player) sender).setAllowFlight(false);
-                            return true;
-                        }
-                        if(((Player) sender).getAllowFlight() == false) {
-                            sender.sendMessage(ChatColor.AQUA + "Flight " + ChatColor.GREEN + "enabled" + ChatColor.AQUA + "!");
-                            ((Player) sender).setAllowFlight(true);
-                            return true;
-                        }
-                    } else {
-                        // Permission Check
-                        sender.sendMessage(ChatColor.RED + "You don't have " + ChatColor.GOLD + "permission" + ChatColor.RED + " to use that command!");
-                    }
-                } else {
-                    // World Check
-                    sender.sendMessage(ChatColor.RED + "You have to be in the " + ChatColor.GOLD + "lobby" + ChatColor.RED + " to use that command!");
+        if (isAllowedWorld(player.getWorld()) || player.hasPermission("lobbyfly.bypass")) {
+            if (player.hasPermission("lobbyfly.use")) {
+                player.setAllowFlight(true);
+                if (player.getPersistentDataContainer().getOrDefault(key, PersistentDataType.BYTE, (byte) 0) == 1) {
+                    player.setFlying(true);
                 }
-            } else {
-                // Usage Check
-                sender.sendMessage(ChatColor.RED + "Incorrect Usage! " + ChatColor.GOLD + "/fly");
             }
         } else {
-            // Player Check
+            player.setAllowFlight(false);
+            player.setFlying(false);
+        }
+    }
+
+    @EventHandler
+    public void onToggle(PlayerToggleFlightEvent event) {
+        Player player = event.getPlayer();
+        if (player.hasPermission("lobbyfly.use")) {
+            if (event.isFlying()) {
+                player.getPersistentDataContainer().set(key, PersistentDataType.BYTE, (byte) 1);
+            } else {
+                player.getPersistentDataContainer().set(key, PersistentDataType.BYTE, (byte) 0);
+            }
+        }
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            if (args.length == 0) {
+                if (isAllowedWorld(player.getWorld()) || player.hasPermission("lobbyfly.bypass")) {
+                    if (player.hasPermission("lobbyfly.use")) {
+                        if (player.getAllowFlight()) {
+                            player.setAllowFlight(false);
+                            player.setFlying(false);
+                            player.getPersistentDataContainer().set(key, PersistentDataType.BYTE, (byte) 0);
+                            player.sendMessage(ChatColor.AQUA + "Flight " + ChatColor.RED + "disabled" + ChatColor.AQUA + "!");
+                        } else {
+                            player.setAllowFlight(true);
+                            player.getPersistentDataContainer().set(key, PersistentDataType.BYTE, (byte) 1);
+                            player.sendMessage(ChatColor.AQUA + "Flight " + ChatColor.GREEN + "enabled" + ChatColor.AQUA + "!");
+                        }
+                    } else {
+                        player.sendMessage(ChatColor.RED + "You don't have " + ChatColor.GOLD + "permission" + ChatColor.RED + " to use that command!");
+                    }
+                } else {
+                    player.sendMessage(ChatColor.RED + "You have to be in the " + ChatColor.GOLD + "lobby" + ChatColor.RED + " to use that command!");
+                }
+            } else {
+                player.sendMessage(ChatColor.RED + "Incorrect Usage! " + ChatColor.GOLD + "/fly");
+            }
+        } else {
             sender.sendMessage(ChatColor.RED + "You need to be a " + ChatColor.GOLD + "PLAYER" + ChatColor.RED + " to run that command!");
         }
         return true;
